@@ -1,8 +1,5 @@
 # Geo Goes to Web - Interactive Map Application 🗺️
 
-## Author ✍️
-[Adilhan KOÇAK]
-
 ## Youtube Link 📝
 
 [Youtube Link](https://youtu.be/aQZzEo4KqR4)
