@@ -213,13 +213,22 @@ npm start
 ## Application Screenshots 📸
 
 ### Login & Register Page
-![Login and Register](![alt text](image.png))
+![Login and Register](image.png)
 
 ### Main Map Interface
-![Map Interface](./screenshots/map-interface.png)
+![Map Interface](https://github.com/user-attachments/assets/c1f13a1a-2c76-4fb0-ad60-dbd5fe18c4af)
+
 
 ### Point Management
-![Point Management](./screenshots/point-management.png)
+![Point Management](https://github.com/user-attachments/assets/6a041976-2ebf-48bc-8f55-9563c6fda48b)
 
-### Mobile View
-![Mobile Interface](./screenshots/mobile-view.png)
+
+### Database View
+![Mobile Interface](https://github.com/user-attachments/assets/cf04da5f-be47-4407-9a4f-81e4d26301f3)
+
+
+### User Authentication
+![User Authentication](https://github.com/user-attachments/assets/770f5f8e-5f09-4a4f-a8fd-93a5a6e328a4)
+![User Authentication](https://github.com/user-attachments/assets/6f8c865e-8c1f-4048-b4d7-8a3de3ce488e)
+
+
