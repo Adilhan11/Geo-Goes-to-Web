@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Authentication</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #2c2c2c;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 4rem; /* Daha büyük başlık */
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #auth-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            background: #085174;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 40px; /* Daha büyük padding */
+            width: 90%; /* Sayfa boyutuna uyumlu genişlik */
+            max-width: 800px; /* Maksimum genişlik */
+        }
+
+        #auth-container > div {
+            flex: 1;
+            border: 2px solid #ffffff; /* Kalın kenarlık */
+            border-radius: 10px;
+            padding: 30px; /* Daha büyük padding */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            background-color: #085174;
+        }
+
+        h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #085174;
+            font-size: 2rem; /* Daha büyük başlık */
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 25px; /* Daha fazla boşluk */
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #ffffff;
+            font-size: 1.5rem; /* Daha büyük yazı */
+        }
+
+        input, select, button {
+            padding: 15px; /* Daha büyük padding */
+            font-size: 1.5rem; /* Daha büyük yazı */
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            width: 100%; /* Genişlik uyumu */
+        }
+
+        button {
+            background-color: #0a68a7;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (min-width: 768px) {
+            #auth-container {
+                flex-direction: row;
+                justify-content: space-between;
+                gap: 30px;
+            }
+
+            #auth-container > div {
+                width: 45%; /* Her iki panelin genişliği eşit */
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>User Authentication</h1>
+    <div id="auth-container">
+        <!-- Login Form -->
+        <div id="login-form">
+            <h3>Login</h3>
+            <form id="login">
+                <label for="username">Username:</label>
+                <input type="text" id="login-username" required>
+                <label for="password">
+                    Password:</label>
+                    <input type="password" id="login-password" required>
+                    <button type="submit">Login</button>
+                </form>
+            </div>
+            <!-- Register Form -->
+            <div id="register-form">
+                <h3>Register</h3>
+                <form id="register">
+                    <label for="username">Username:</label>
+                    <input type="text" id="register-username" required>
+                    <label for="password">Password:</label>
+                    <input type="password" id="register-password" required>
+                    <label for="role">Role:</label>
+                    <select id="register-role">
+                        <option value="1">Admin</option>
+                        <option value="2">Teacher</option>
+                        <option value="3">User</option>
+                    </select>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+        </div>
+        <script src="auth.js"></script>
+    </body>
+    </html>
+    

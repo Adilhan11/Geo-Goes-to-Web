@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Manage Points</title>
+        <link rel="stylesheet" href="styles.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    </head>
+    <body>
+        <h1>Manage Points on Map</h1>
+        <div id="container">
+            <!-- Kontrol Paneli -->
+            <div class="control-panel">
+                <div class="filter-group">
+                    <h3>Filter Points</h3>
+                    <button id="filter-domestic">Domestic</button>
+                    <button id="filter-abroad">Abroad</button>
+                </div>
+                <div class="load-group">
+                    <button id="load-points-btn">Load Points</button>
+                </div>
+                <div class="add-group">
+                    <h3>Add Point</h3>
+                    <form id="add-point-form">
+                        <label for="description">Description:</label>
+                        <input type="text" id="description" name="description" required>
+                        <label for="image">Image:</label>
+                        <input type="file" id="image" name="image">
+                        <button type="submit">Add Point</button>
+                    </form>
+                </div>
+                <div class="export-group">
+                    <button id="export-geojson-btn">Export as GeoJSON</button>
+                </div>
+            </div>
+    
+            <!-- Harita Alanı -->
+            <div id="map"></div>
+    
+            <!-- Güncelleme Formu -->
+            <div id="update-form-container">
+                <h3>Update Point</h3>
+                <form id="update-point-form">
+                    <input type="hidden" id="update-point-id">
+                    <label for="update-description">Description:</label>
+                    <input type="text" id="update-description" name="description" required>
+                    <label for="update-latitude">Latitude:</label>
+                    <input type="text" id="update-latitude" name="latitude" required>
+                    <label for="update-longitude">Longitude:</label>
+                    <input type="text" id="update-longitude" name="longitude" required>
+                    <button type="submit">Update Point</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    
+    
+    <script>
+        const map = L.map('map').setView([39.9334, 32.8597], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        let selectedMarker = null;
+
+        // Haritada bir nokta seçildiğinde marker ekleme veya taşıma
+        map.on('click', function (e) {
+            if (selectedMarker) {
+                map.removeLayer(selectedMarker);
+            }
+
+            selectedMarker = L.marker([e.latlng.lat, e.latlng.lng], { draggable: true })
+                .addTo(map)
+                .bindPopup(`
+                    <b>Selected Point</b><br>
+                    <button onclick="removeMarker()">Remove</button>
+                `)
+                .openPopup();
+
+            selectedMarker.on('dragend', function (event) {
+                const position = event.target.getLatLng();
+                console.log('New Position:', position);
+                selectedLatLng = position;
+            });
+
+            selectedLatLng = e.latlng;
+        });
+
+        function removeMarker() {
+            if (selectedMarker) {
+                map.removeLayer(selectedMarker);
+                selectedMarker = null;
+                selectedLatLng = null;
+                console.log('Marker removed');
+            }
+        }
+
+        document.getElementById('load-points-btn').addEventListener('click', function () {
+    const token = localStorage.getItem('token'); // Tokeni al
+    fetch('http://localhost:3000/api/points', {
+        headers: {
+            'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekle
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format'); // Beklenmeyen formatı kontrol et
+            }
+            data.forEach(point => {
+                const marker = L.marker([point.latitude, point.longitude]).addTo(map);
+                const popupContent = `
+                    <b>${point.description}</b><br>
+                    Lat: ${point.latitude}, Lng: ${point.longitude}<br>
+                    ${
+                        point.image_url
+                            ? `<img src="http://localhost:3000/${point.image_url}" alt="${point.description}" style="max-width: 200px; max-height: 150px;">`
+                            : ''
+                    }
+                    <br>
+                    <button onclick="editPoint(${point.id}, '${point.description}', ${point.latitude}, ${point.longitude})">Edit</button>
+                    <button onclick="deletePoint(${point.id})">Delete</button>
+                `;
+                marker.bindPopup(popupContent);
+            });
+        })
+        .catch(err => {
+            console.error('Error loading points:', err);
+            alert('An error occurred while loading points.');
+        });
+});
+
+
+        // Filtreleme fonksiyonları
+        function isWithinTurkey(lat, lng) {
+            const minLat = 35.0, maxLat = 42.0;
+            const minLng = 25.0, maxLng = 45.0;
+            return lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng;
+        }
+
+        function clearMarkers() {
+            map.eachLayer(layer => {
+                if (layer instanceof L.Marker) {
+                    map.removeLayer(layer);
+                }
+            });
+        }
+
+        document.getElementById('filter-domestic').addEventListener('click', function () {
+    const token = localStorage.getItem('token'); // Tokeni al
+    fetch('http://localhost:3000/api/points', {
+        headers: {
+            'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekle
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format'); // Beklenmeyen formatı kontrol et
+            }
+            clearMarkers();
+            data.forEach(point => {
+                if (isWithinTurkey(point.latitude, point.longitude)) {
+                    const marker = L.marker([point.latitude, point.longitude]).addTo(map);
+                    marker.bindPopup(`<b>${point.description}</b>`);
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Error filtering domestic points:', err);
+            alert('An error occurred while filtering domestic points.');
+        });
+});
+
+
+document.getElementById('filter-abroad').addEventListener('click', function () {
+    const token = localStorage.getItem('token'); // Tokeni al
+    fetch('http://localhost:3000/api/points', {
+        headers: {
+            'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekle
+        }
+    })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (!Array.isArray(data)) {
+                throw new Error('Invalid data format'); // Beklenmeyen formatı kontrol et
+            }
+            clearMarkers();
+            data.forEach(point => {
+                if (!isWithinTurkey(point.latitude, point.longitude)) {
+                    const marker = L.marker([point.latitude, point.longitude]).addTo(map);
+                    marker.bindPopup(`<b>${point.description}</b>`);
+                }
+            });
+        })
+        .catch(err => {
+            console.error('Error filtering abroad points:', err);
+            alert('An error occurred while filtering abroad points.');
+        });
+});
+
+        function editPoint(id, description, latitude, longitude) {
+            document.getElementById('update-point-id').value = id;
+            document.getElementById('update-description').value = description;
+            document.getElementById('update-latitude').value = latitude;
+            document.getElementById('update-longitude').value = longitude;
+            document.getElementById('update-form-container').style.display = 'block';
+        }
+
+        document.getElementById('update-point-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const id = document.getElementById('update-point-id').value;
+            const description = document.getElementById('update-description').value;
+            const latitude = document.getElementById('update-latitude').value;
+            const longitude = document.getElementById('update-longitude').value;
+
+            fetch(`http://localhost:3000/api/points/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ description, latitude, longitude })
+            })
+                .then(response => response.json())
+                .then(() => {
+                    alert('Point updated successfully!');
+                    document.getElementById('update-form-container').style.display = 'none';
+                    location.reload();
+                })
+                .catch(err => console.error('Error updating point:', err));
+        });
+
+        function deletePoint(id) {
+            const token = localStorage.getItem('token'); // Kullanıcı tokeni
+
+            if (confirm('Are you sure you want to delete this point?')) {
+                fetch(`http://localhost:3000/api/points/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}` // Yetkilendirme başlığı ekle
+                    }
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Error deleting point'); // Başarısız yanıt durumunda hata fırlat
+                        }
+                        return response.json();
+                    })
+                    .then(() => {
+                        alert('Point deleted successfully!');
+                        location.reload(); // Sayfayı yenile
+                    })
+                    .catch(err => {
+                        console.error('Error deleting point:', err);
+                        alert('An error occurred while deleting the point. Please try again.');
+                    });
+            }
+        }
+
+    </script>
+    <script src="add-point.js"></script>
+</body>
+</html>
