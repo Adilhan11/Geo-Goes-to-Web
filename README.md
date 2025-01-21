@@ -15,6 +15,12 @@ Geo Goes to Web is a web-based application that enables users to interact with g
 - 📸 Image upload capability for points
 - 📊 Export data in GeoJSON format
 - 📱 Responsive design for all devices
+- 💬 Comment system for points
+- 🏷️ Category-based point organization
+- 🔍 Advanced search and filtering
+- 📊 User activity tracking
+- 🔄 Real-time updates
+- 📱 Mobile-friendly interface
 
 ## Tech Stack 💻
 
@@ -51,7 +57,9 @@ CREATE TABLE users (
     id INT IDENTITY(1,1) PRIMARY KEY,
     username NVARCHAR(50) UNIQUE NOT NULL,
     password NVARCHAR(255) NOT NULL,
-    role_id INT NOT NULL
+    role_id INT NOT NULL,
+    last_login DATETIME,
+    created_at DATETIME DEFAULT GETDATE()
 );
 
 -- Points Table
@@ -60,7 +68,31 @@ CREATE TABLE points (
     latitude FLOAT NOT NULL,
     longitude FLOAT NOT NULL,
     description NVARCHAR(MAX),
-    image_url NVARCHAR(255)
+    image_url NVARCHAR(255),
+    category_id INT,
+    created_by INT,
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+-- Categories Table
+CREATE TABLE categories (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    description NVARCHAR(255),
+    created_at DATETIME DEFAULT GETDATE()
+);
+
+-- Comments Table
+CREATE TABLE comments (
+    id INT IDENTITY(1,1) PRIMARY KEY,
+    point_id INT,
+    user_id INT,
+    comment_text NVARCHAR(MAX),
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (point_id) REFERENCES points(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 -- Roles Table
@@ -81,17 +113,36 @@ INSERT INTO roles (role_name) VALUES
 
 ### Authentication
 ```
-POST /register - Register new user
-POST /login - User login
+POST /api/auth/register - Register new user
+POST /api/auth/login    - User login
+GET  /api/auth/profile  - Get user profile
+PUT  /api/auth/profile  - Update user profile
 ```
 
 ### Points Management
 ```
 GET    /api/points         - Get all points
 POST   /api/points         - Add new point
-PUT    /api/points/:id     - Update point (Admin only)
-DELETE /api/points/:id     - Delete point (Admin/Teacher)
-GET    /api/points/geojson - Export as GeoJSON (Admin only)
+PUT    /api/points/:id     - Update point
+DELETE /api/points/:id     - Delete point
+GET    /api/points/geojson - Export as GeoJSON
+GET    /api/points/category/:id - Get points by category
+```
+
+### Categories
+```
+GET    /api/categories     - Get all categories
+POST   /api/categories     - Create category
+PUT    /api/categories/:id - Update category
+DELETE /api/categories/:id - Delete category
+```
+
+### Comments
+```
+GET    /api/comments/point/:id - Get comments for point
+POST   /api/comments          - Add comment
+PUT    /api/comments/:id      - Update comment
+DELETE /api/comments/:id      - Delete comment
 ```
 
 ## Role-Based Access Control 👥
@@ -170,6 +221,8 @@ npm start
 - Protected API endpoints
 - SQL injection prevention
 - Secure file upload handling
+- Rate limiting
+- Input sanitization
 
 ## Frontend Features 🎨
 - Interactive map with Leaflet.js
@@ -179,6 +232,9 @@ npm start
 - Form validation
 - File upload preview
 - Success/error notifications
+- Category filtering
+- Comment system interface
+- Real-time updates
 
 ## Backend Features ⚙️
 - RESTful API architecture
@@ -198,10 +254,14 @@ npm start
 - File upload restrictions
 
 ## Future Improvements 🚀
-- [ ] User profile management
-- [ ] Point categories and filtering
-- [ ] Real-time updates
-- [ ] Bulk import/export features
+- [ ] Advanced analytics dashboard
+- [ ] Offline mode support
+- [ ] Push notifications
+- [ ] Multi-language support
+- [ ] Advanced reporting features
+- [ ] Mobile application
+- [ ] Social sharing features
+- [ ] Integration with external mapping services
 
 ## Acknowledgments 🙏
 - Leaflet.js for mapping functionality
