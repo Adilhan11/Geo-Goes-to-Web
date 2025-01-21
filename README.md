@@ -123,23 +123,32 @@ POST   /api/points         - Add new point
 PUT    /api/points/:id     - Update point
 DELETE /api/points/:id     - Delete point
 GET    /api/points/geojson - Export as GeoJSON
-GET    /api/points/category/:id - Get points by category
 ```
 
-### Categories
+### Polygons Management
 ```
-GET    /api/categories     - Get all categories
-POST   /api/categories     - Create category
-PUT    /api/categories/:id - Update category
-DELETE /api/categories/:id - Delete category
+GET    /api/polygons       - Get all polygons
+POST   /api/polygons       - Create polygon
+PUT    /api/polygons/:id   - Update polygon
+DELETE /api/polygons/:id   - Delete polygon
+GET    /api/polygons/geojson - Export polygons as GeoJSON
 ```
 
-### Comments
+### Lines Management
 ```
-GET    /api/comments/point/:id - Get comments for point
-POST   /api/comments          - Add comment
-PUT    /api/comments/:id      - Update comment
-DELETE /api/comments/:id      - Delete comment
+GET    /api/lines         - Get all lines
+POST   /api/lines        - Create line
+PUT    /api/lines/:id    - Update line
+DELETE /api/lines/:id    - Delete line
+GET    /api/lines/geojson - Export lines as GeoJSON
+```
+
+### Roles Management
+```
+GET    /api/roles        - Get all roles
+POST   /api/roles        - Create role (Admin only)
+PUT    /api/roles/:id    - Update role (Admin only)
+DELETE /api/roles/:id    - Delete role (Admin only)
 ```
 
 ## Role-Based Access Control 👥
