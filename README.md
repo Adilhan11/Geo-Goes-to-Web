@@ -69,30 +69,27 @@ CREATE TABLE points (
     longitude FLOAT NOT NULL,
     description NVARCHAR(MAX),
     image_url NVARCHAR(255),
-    category_id INT,
     created_by INT,
     created_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (category_id) REFERENCES categories(id),
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
--- Categories Table
-CREATE TABLE categories (
+-- Polygons Table
+CREATE TABLE polygons (
     id INT IDENTITY(1,1) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
-    description NVARCHAR(255),
+    coordinates NVARCHAR(MAX) NOT NULL,
+    style NVARCHAR(MAX),
     created_at DATETIME DEFAULT GETDATE()
 );
 
--- Comments Table
-CREATE TABLE comments (
+-- Lines Table
+CREATE TABLE lines (
     id INT IDENTITY(1,1) PRIMARY KEY,
-    point_id INT,
-    user_id INT,
-    comment_text NVARCHAR(MAX),
-    created_at DATETIME DEFAULT GETDATE(),
-    FOREIGN KEY (point_id) REFERENCES points(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    name NVARCHAR(100) NOT NULL,
+    coordinates NVARCHAR(MAX) NOT NULL,
+    style NVARCHAR(MAX),
+    created_at DATETIME DEFAULT GETDATE()
 );
 
 -- Roles Table
