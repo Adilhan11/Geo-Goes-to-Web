@@ -65,35 +65,50 @@ document.getElementById("add-point-form").addEventListener("submit", async funct
     }
 });
 
-// Nokta güncelleme işlevi
-document.getElementById("update-point-form").addEventListener("submit", async function (e) {
-    e.preventDefault(); // Sayfanın yeniden yüklenmesini engelle
-
-    const id = document.getElementById("update-point-id").value;
-    const description = document.getElementById("update-description").value;
-    const latitude = document.getElementById("update-latitude").value;
-    const longitude = document.getElementById("update-longitude").value;
+// Enhanced update form handler with image support
+document.getElementById('update-point-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData();
+    const id = document.getElementById('update-point-id').value;
+    
+    formData.append('description', document.getElementById('update-description').value);
+    formData.append('latitude', document.getElementById('update-latitude').value);
+    formData.append('longitude', document.getElementById('update-longitude').value);
+    
+    const imageInput = document.getElementById('update-image');
+    if (imageInput.files.length > 0) {
+        formData.append('image', imageInput.files[0]);
+    }
 
     try {
         const response = await fetch(`http://localhost:3000/api/points/${id}`, {
-            method: "PUT",
+            method: 'PUT',
             headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
             },
-            body: JSON.stringify({ description, latitude, longitude }),
+            body: formData // FormData kullanarak resmi gönder
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Error: ${errorText}`);
+            throw new Error('Failed to update point');
         }
 
-        alert("Point updated successfully!");
-        location.reload(); // Sayfayı yenile
+        const result = await response.json();
+        showToast('Point updated successfully', 'success');
+        document.getElementById('update-form-container').style.display = 'none';
+        
+        // Tüm noktaları yeniden yükle
+        clearMarkers();
+        document.getElementById('load-points-btn').click();
+        
+        // Formu sıfırla
+        this.reset();
+        document.getElementById('current-image-preview').innerHTML = '';
+        
     } catch (err) {
-        console.error("Error updating point:", err);
-        alert("An error occurred while updating the point. Please try again.");
+        console.error('Error updating point:', err);
+        showToast('Error updating point', 'error');
     }
 });
 

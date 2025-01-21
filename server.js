@@ -5,17 +5,63 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 const sql = require("mssql");
+const path = require("path");
 const config = require("./config");
 const port = 3000;
-const upload = multer({ dest: "uploads/" });
+
+// Multer storage konfigürasyonu
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/');
+    },
+    filename: function (req, file, cb) {
+        // Orijinal dosya adını ve uzantısını koru
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const fileExt = path.extname(file.originalname);
+        cb(null, `image-${uniqueSuffix}${fileExt}`);
+    }
+});
+
+const upload = multer({ storage: storage });
+
 const app = express();
 
-const JWT_SECRET = "fenerbahce"; // Güvenli bir anahtar belirleyin
+// CORS ayarlarını güncelle
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    exposedHeaders: ['Content-Disposition']
+}));
 
-app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use("/uploads", express.static("uploads"));
+
+// Statik dosya servis ayarını güncelle
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+    setHeaders: (res, filepath) => {
+        // Dosya uzantısına göre Content-Type ayarla
+        const ext = path.extname(filepath).toLowerCase();
+        switch (ext) {
+            case '.jpg':
+            case '.jpeg':
+                res.setHeader('Content-Type', 'image/jpeg');
+                break;
+            case '.png':
+                res.setHeader('Content-Type', 'image/png');
+                break;
+            case '.gif':
+                res.setHeader('Content-Type', 'image/gif');
+                break;
+            default:
+                res.setHeader('Content-Type', 'application/octet-stream');
+        }
+        res.setHeader('Content-Disposition', 'inline');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+}));
+
+const JWT_SECRET = "fenerbahce"; // Güvenli bir anahtar belirleyin
 
 // Yetkilendirme middleware
 function authenticate(req, res, next) {
@@ -137,31 +183,57 @@ sql.connect(config)
             }
         });
 
-        app.put("/api/points/:id", authenticate, authorizeRoles(1), async (req, res) => {
+        app.put("/api/points/:id", authenticate, authorizeRoles(1), upload.single("image"), async (req, res) => {
             const { id } = req.params;
             const { description, latitude, longitude } = req.body;
-
+            const image_url = req.file ? req.file.path : null;
+        
             try {
-                const result = await pool
-                    .request()
+                let updateQuery;
+                let request = pool.request()
                     .input("id", sql.Int, id)
                     .input("description", sql.NVarChar, description)
                     .input("latitude", sql.Float, latitude)
-                    .input("longitude", sql.Float, longitude)
-                    .query(
-                        "UPDATE points SET description = @description, latitude = @latitude, longitude = @longitude WHERE id = @id"
-                    );
-
+                    .input("longitude", sql.Float, longitude);
+        
+                if (image_url) {
+                    // Eğer yeni resim yüklendiyse, image_url'i güncelle
+                    updateQuery = `
+                        UPDATE points 
+                        SET description = @description, 
+                            latitude = @latitude, 
+                            longitude = @longitude, 
+                            image_url = @image_url 
+                        WHERE id = @id
+                    `;
+                    request.input("image_url", sql.NVarChar, image_url);
+                } else {
+                    // Resim yüklenmediyse, mevcut resmi koru
+                    updateQuery = `
+                        UPDATE points 
+                        SET description = @description, 
+                            latitude = @latitude, 
+                            longitude = @longitude 
+                        WHERE id = @id
+                    `;
+                }
+        
+                const result = await request.query(updateQuery);
+        
                 if (result.rowsAffected[0] === 0) {
                     return res.status(404).json({ message: "Point not found." });
                 }
-
-                res.status(200).json({ message: "Point updated successfully!" });
+        
+                res.status(200).json({ 
+                    message: "Point updated successfully!",
+                    image_url: image_url // Yeni resim URL'ini dön
+                });
             } catch (error) {
                 console.error("Error updating point:", error);
                 res.status(500).json({ message: "Error updating point" });
             }
         });
+        
 
         app.delete("/api/points/:id", authenticate, authorizeRoles(1,2), async (req, res) => {
             const { id } = req.params;
@@ -209,6 +281,109 @@ sql.connect(config)
             } catch (error) {
                 console.error("Error exporting GeoJSON:", error);
                 res.status(500).json({ message: "Error exporting GeoJSON" });
+            }
+        });
+
+        // New endpoints for lines
+        app.post("/api/lines", authenticate, async (req, res) => {
+            const { name, coordinates, style } = req.body;
+
+            try {
+                const result = await pool
+                    .request()
+                    .input("name", sql.NVarChar, name)
+                    .input("coordinates", sql.NVarChar, JSON.stringify(coordinates))
+                    .input("style", sql.NVarChar, JSON.stringify(style))
+                    .query(
+                        "INSERT INTO lines (name, coordinates, style) VALUES (@name, @coordinates, @style)"
+                    );
+
+                res.status(201).json({ message: "Line added successfully!", result });
+            } catch (error) {
+                console.error("Error saving line:", error);
+                res.status(500).json({ message: "Error saving line" });
+            }
+        });
+
+        app.get("/api/lines", authenticate, async (req, res) => {
+            try {
+                const result = await pool.request().query("SELECT * FROM lines");
+                res.status(200).json(result.recordset);
+            } catch (error) {
+                console.error("Error fetching lines:", error);
+                res.status(500).json({ message: "Error fetching lines" });
+            }
+        });
+
+        // New endpoints for polygons
+        app.post("/api/polygons", authenticate, async (req, res) => {
+            const { name, coordinates, style } = req.body;
+
+            try {
+                const result = await pool
+                    .request()
+                    .input("name", sql.NVarChar, name)
+                    .input("coordinates", sql.NVarChar, JSON.stringify(coordinates))
+                    .input("style", sql.NVarChar, JSON.stringify(style))
+                    .query(
+                        "INSERT INTO polygons (name, coordinates, style) VALUES (@name, @coordinates, @style)"
+                    );
+
+                res.status(201).json({ message: "Polygon added successfully!", result });
+            } catch (error) {
+                console.error("Error saving polygon:", error);
+                res.status(500).json({ message: "Error saving polygon" });
+            }
+        });
+
+        app.get("/api/polygons", authenticate, async (req, res) => {
+            try {
+                const result = await pool.request().query("SELECT * FROM polygons");
+                res.status(200).json(result.recordset);
+            } catch (error) {
+                console.error("Error fetching polygons:", error);
+                res.status(500).json({ message: "Error fetching polygons" });
+            }
+        });
+
+        // Delete endpoints for lines and polygons
+        app.delete("/api/lines/:id", authenticate, authorizeRoles(1, 2), async (req, res) => {
+            const { id } = req.params;
+
+            try {
+                const result = await pool
+                    .request()
+                    .input("id", sql.Int, id)
+                    .query("DELETE FROM lines WHERE id = @id");
+
+                if (result.rowsAffected[0] === 0) {
+                    return res.status(404).json({ message: "Line not found." });
+                }
+
+                res.status(200).json({ message: "Line deleted successfully!" });
+            } catch (error) {
+                console.error("Error deleting line:", error);
+                res.status(500).json({ message: "Error deleting line" });
+            }
+        });
+
+        app.delete("/api/polygons/:id", authenticate, authorizeRoles(1, 2), async (req, res) => {
+            const { id } = req.params;
+
+            try {
+                const result = await pool
+                    .request()
+                    .input("id", sql.Int, id)
+                    .query("DELETE FROM polygons WHERE id = @id");
+
+                if (result.rowsAffected[0] === 0) {
+                    return res.status(404).json({ message: "Polygon not found." });
+                }
+
+                res.status(200).json({ message: "Polygon deleted successfully!" });
+            } catch (error) {
+                console.error("Error deleting polygon:", error);
+                res.status(500).json({ message: "Error deleting polygon" });
             }
         });
 
