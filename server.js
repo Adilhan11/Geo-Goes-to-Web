@@ -255,9 +255,8 @@ sql.connect(config)
             }
         });
         
-
         // GeoJSON dışa aktarma rotası
-        app.get("/api/points/geojson", authenticate,authorizeRoles(1), async (req, res) => {
+        app.get("/api/points/geojson", authenticate,authorizeRoles(1,2,3), async (req, res) => {
             try {
                 const result = await pool.request().query("SELECT * FROM points");
 
