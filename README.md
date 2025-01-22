@@ -277,18 +277,30 @@ npm start
 ## Application Screenshots 📸
 
 ### Login & Register Page
-![Login and Register](image.png)
+![Login and Register](https://github.com/user-attachments/assets/1fe5446b-666a-4cb1-afa7-845f44636244)
 
 ### Main Map Interface
-![Map Interface](https://github.com/user-attachments/assets/c1f13a1a-2c76-4fb0-ad60-dbd5fe18c4af)
-
+![Map Interface](https://github.com/user-attachments/assets/c9b2ca64-7043-4779-8ab0-6ea121fc5369)
+![Map Interface](https://github.com/user-attachments/assets/83b358fd-69c9-46ef-b31e-113970da72b9)
+![Map Interface](https://github.com/user-attachments/assets/c44b6661-e475-49e9-a3e2-bb8df87dea14)
 
 ### Point Management
-![Point Management](https://github.com/user-attachments/assets/6a041976-2ebf-48bc-8f55-9563c6fda48b)
+![Point Management](https://github.com/user-attachments/assets/35c9de7d-6609-4329-b461-1e6751f475b7)
+
+### Line Management
+![Line Management](https://github.com/user-attachments/assets/36b8ed9b-8b41-44d0-82ac-33891492ee56)
 
 
-### Database View
-![Mobile Interface](https://github.com/user-attachments/assets/cf04da5f-be47-4407-9a4f-81e4d26301f3)
+### Polygone Management
+![Polygone Management](https://github.com/user-attachments/assets/2ed0184c-9170-427b-afaf-f72fb2f62500)
+
+# Database View
+### POLYGONE View
+![POLYGONE DB](https://github.com/user-attachments/assets/c3c1d9db-1234-40f8-be4f-d0b7d768e47b)
+### LINE View
+![LINE DB](https://github.com/user-attachments/assets/8f899b37-2d88-4caa-9467-72360f74b7b9)
+### POINT View
+![POINT DB](https://github.com/user-attachments/assets/fd401d46-0305-4789-b89f-4c7c464e2dca)
 
 
 ### User Authentication
